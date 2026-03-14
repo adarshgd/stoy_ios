@@ -1,0 +1,41 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.19.0' # Adjust to your version if needed
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: .
+
+      - name: Build iOS IPA (Unsigned)
+        run: flutter build ios --release --no-codesign
+        working-directory: .
+
+      - name: Create IPA (Unsigned)
+        run: |
+          mkdir -p Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          zip -r app-release-unsigned.ipa Payload
+        working-directory: .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: flutter_ble_stoy/app-release-unsigned.ipa
